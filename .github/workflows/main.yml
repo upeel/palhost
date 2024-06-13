@@ -1,0 +1,29 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - staging  # or any branch you want to deploy from
+
+jobs:
+  deploy-to-staging-server:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up SSH key
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_DEPLOY_PRIVATE_KEY }}
+
+    - name: Deploy to Server
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_STAGING_HOST }} '
+        export PATH="/home/githubactionuser/.nvm/versions/node/v20.11.0/bin:$PATH";
+          cd /data/wwwroot/stagclient && 
+          git pull && 
+          /usr/local/bin/yarn install && 
+          /usr/local/bin/yarn build && 
+          bash /data/wwwroot/pm2stag.sh
+        '
